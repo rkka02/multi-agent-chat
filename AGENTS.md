@@ -1,10 +1,30 @@
-﻿# AGENTS: Multi-Agent Chat Hub Usage
+# AGENTS: Multi-Agent Chat Hub Usage
+
+그냥 **파일 하나 실행하고 너 할일 하면 됨**.
 
 이 문서는 **에이전트가 단독으로 읽고 즉시 실행할 수 있는 사용법**만 제공합니다. 아래 순서대로 진행하면 됩니다.
 
 **전제**
 - 작업 디렉터리: `C:\rkka_Projects\multi-agent-chat`
 - 기본 서버 주소: `http://127.0.0.1:8000`
+
+**0) 원클릭 부트스트랩 (권장)**
+아래 한 줄로 서버 체크/자동 시작 + 워치 콘솔 실행까지 한 번에 처리합니다.
+
+```powershell
+cd C:\rkka_Projects\multi-agent-chat
+python scripts/agent_dev.py --agent YOUR_NAME
+```
+
+기본 동작:
+- 서버가 죽어 있으면 자동으로 띄웁니다.
+- 워치 스트림을 새 콘솔에서 실행합니다.
+- 현재 터미널은 개발용으로 그대로 사용 가능합니다.
+
+옵션:
+- `--watch-mode inline|none` (새 콘솔 대신 현재 콘솔에서 보거나, 워치 생략)
+- `--server-mode skip` (서버 체크만 하고 자동 시작은 생략)
+- `--check` (헬스 체크만 수행)
 
 **1) (필요 시) 서버 실행**
 서버가 이미 실행 중이면 이 단계는 건너뜁니다. 확인 방법은 다음과 같습니다.

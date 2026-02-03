@@ -28,6 +28,20 @@ Local coordination hub for running multiple CLI coding agents on one machine. Ag
    curl -X POST http://127.0.0.1:8000/api/messages -H "Content-Type: application/json" -d "{\"agent\":\"codex\",\"kind\":\"status\",\"content\":\"hello\",\"room\":\"default\"}"
    ```
 
+## One-Command Agent Bootstrap
+
+If you are an agent and want a single command that checks the server, starts it if needed, and opens a live watch stream in a new console window (so your current CLI stays free), run:
+
+```bash
+python scripts/agent_dev.py --agent YOUR_NAME
+```
+
+Optional flags:
+
+- `--watch-mode inline|none` to watch in the current terminal or skip watch
+- `--server-mode skip` to avoid auto-starting the server
+- `--check` to perform only a health check
+
 ## CLI Helper
 
 Use the bundled CLI to post or watch messages.

@@ -1,4 +1,4 @@
-﻿# Build a Local Multi-Agent Work Chat Hub
+# Add one-command agent bootstrap and live watch helper
 
 This ExecPlan is a living document. The sections `Progress`, `Surprises & Discoveries`, `Decision Log`, and `Outcomes & Retrospective` must be kept up to date as work proceeds.
 
@@ -6,102 +6,94 @@ The repository root contains `PLANS.md`. This document must be maintained in acc
 
 ## Purpose / Big Picture
 
-After this change, a user can run a local web hub that lets multiple CLI coding agents post status updates and read each other’s messages in real time. The hub persists messages in a local SQLite database, provides a WebSocket feed for live updates, and serves a small web UI so the user can monitor progress in the browser. A newcomer can verify the system by starting the server, opening the web UI, posting a message via HTTP, and seeing it appear live in the UI.
+After this change, an agent can run a single script from `multi-agent-chat` and immediately have a live watch stream running in a separate terminal (or inline if desired) while keeping the current CLI free for development. The same script should optionally set the agent name once, check whether the server is already running, and start the server automatically if it is not. A newcomer can verify the behavior by running the script, seeing a new watch window with live chat output, and continuing to type in their original terminal without interruption.
 
 ## Progress
 
-- [x] (2026-02-04T04:15:34+09:00) Read `PLANS.md` and drafted the initial ExecPlan.
-- [x] (2026-02-04T04:21:37+09:00) Implemented the FastAPI server, SQLite persistence, and WebSocket broadcast.
-- [x] (2026-02-04T04:21:37+09:00) Built the web UI and CLI helper for agents.
-- [x] (2026-02-04T04:21:37+09:00) Added README guidance, a basic API test, and validated with `pytest`.
-- [x] (2026-02-04T04:25:03+09:00) Added `AGENTS.md` usage instructions for autonomous agents.
+- [x] (2026-02-03T20:15Z) Read `PLANS.md` and rewrote the ExecPlan for the bootstrap/watch helper.
+- [x] (2026-02-03T20:18Z) Implemented `scripts/agent_dev.py` with server bootstrap and watch modes.
+- [x] (2026-02-03T20:18Z) Updated `AGENTS.md` and `README.md` with the one-command workflow.
+- [x] (2026-02-03T20:19Z) Validated `python scripts/agent_dev.py --check` against the running server.
 
 ## Surprises & Discoveries
 
-- Observation: `pytest` could not import the `app` package until the repo root was added to the Python path.
-  Evidence: `ModuleNotFoundError: No module named 'app'` during collection, resolved by adding `pytest.ini` with `pythonpath = .`.
-
-- Observation: Installing the pinned dependencies downgraded preinstalled packages and produced a pip conflict warning.
-  Evidence: pip reported `supabase 2.3.4 requires httpx<0.26,>=0.24, but you have httpx 0.28.1 which is incompatible.`
+None yet.
 
 ## Decision Log
 
-- Decision: Use FastAPI with WebSocket support and a simple SQLite database for persistence.
-  Rationale: FastAPI is productive for HTTP and WebSocket endpoints, and SQLite is sufficient for a single-machine hub with low operational overhead.
-  Date/Author: 2026-02-04T04:15:34+09:00 (Codex)
+- Decision: Implement the helper as a new Python script under `scripts/` using only the standard library.
+  Rationale: This matches the existing CLI helpers and keeps the workflow self-contained without introducing new dependencies.
+  Date/Author: 2026-02-03 / Codex
 
-- Decision: Provide a minimal browser UI plus HTTP endpoints, with WebSocket updates for real-time viewing.
-  Rationale: The UI satisfies the user’s monitoring needs while HTTP endpoints keep it easy for CLI agents to post updates without extra integration work.
-  Date/Author: 2026-02-04T04:15:34+09:00 (Codex)
+- Decision: On Windows, open the watch stream in a new console by default and fall back to inline mode when requested.
+  Rationale: The goal is to keep the current terminal free for development while still showing live chat updates.
+  Date/Author: 2026-02-03 / Codex
 
-- Decision: Use a FastAPI lifespan handler to initialize the database instead of deprecated `on_event` hooks.
-  Rationale: This avoids deprecation warnings and keeps startup behavior explicit and future-proof.
-  Date/Author: 2026-02-04T04:21:37+09:00 (Codex)
+- Decision: Prefer the project’s `.venv` Python if available, otherwise fall back to the current interpreter.
+  Rationale: The watch and server dependencies are installed in the project venv in the normal setup path.
+  Date/Author: 2026-02-03 / Codex
 
-- Decision: Add `pytest.ini` to set `pythonpath = .` so tests can import `app` without installing the package.
-  Rationale: Keeps tests lightweight and makes the repo runnable without packaging steps.
-  Date/Author: 2026-02-04T04:21:37+09:00 (Codex)
-
-- Decision: Provide a dedicated `AGENTS.md` quickstart so agent processes can self-serve.
-  Rationale: The user explicitly requested agent-facing usage guidance; keeping it separate makes it easy to find and copy into agent prompts.
-  Date/Author: 2026-02-04T04:25:03+09:00 (Codex)
+- Decision: Add a `--check` mode for safe validation without launching extra consoles.
+  Rationale: It enables quick verification in automated or shared terminals without side effects.
+  Date/Author: 2026-02-03 / Codex
 
 ## Outcomes & Retrospective
 
-The local hub is implemented with a FastAPI server, SQLite persistence, a WebSocket broadcast channel, and a browser UI for monitoring. A CLI helper script enables agents to post or watch updates. Basic API tests pass. The agent-facing `AGENTS.md` quickstart is now available. The remaining work is optional polish, such as authentication or multi-room management UI, which was intentionally out of scope for the single-machine MVP.
+The repository now includes a single-command bootstrap helper that checks server health, starts the server if needed, and opens a live watch stream in a separate console by default. Documentation was updated to point agents to the new workflow. A health-check validation run succeeded. Remaining work is optional polish (for example, auto-venv bootstrap), which is out of scope for this change.
 
 ## Context and Orientation
 
-The repository now includes a Python application under `app/`, a frontend under `frontend/`, a CLI helper at `scripts/agent_cli.py`, tests under `tests/`, and configuration files (`requirements.txt`, `pytest.ini`, `README.md`, `AGENTS.md`). The server stores messages in `data/agent_chat.sqlite3` by default. The term “hub” refers to the HTTP/WebSocket server that collects messages. A “room” is a named channel used to group messages. A “message” is a structured record containing an agent name, a kind (such as status or blocker), and the text content.
+The repository already contains a FastAPI server (`app/`) and two CLI helpers: `scripts/post_message.py` for posting messages and `scripts/agent_cli.py` for posting or watching via WebSocket. The server is expected to run on `http://127.0.0.1:8000` by default and exposes a `/health` endpoint. Agents currently need multiple manual steps to start the server, set their agent name, and run a watch stream. The new helper will bundle those steps into one command.
+
+Terms used in this plan:
+
+“Watch stream” refers to the long-running WebSocket listener provided by `scripts/agent_cli.py watch`, which prints messages as they arrive. “Bootstrap” refers to the sequence of checking server health and starting `uvicorn` if the server is not already running.
 
 ## Plan of Work
 
-Build a FastAPI application in `app/main.py` that wires together SQLite helpers from `app/db.py`, Pydantic schemas from `app/schema.py`, and a WebSocket connection manager from `app/realtime.py`. Serve the browser UI from `frontend/index.html` with static assets in the same folder. Provide a CLI helper in `scripts/agent_cli.py` for posting and watching updates. Document usage in `README.md` and `AGENTS.md` and add a small test in `tests/test_api.py` plus `pytest.ini` to make imports work without packaging.
+Add a new script `scripts/agent_dev.py` that provides a single entry point. The script will check server health via HTTP. If the server is down, it will start `uvicorn` using the project’s `.venv` Python when available and fall back to the current Python otherwise. The script will then launch the watch stream in a new console window on Windows, or inline when explicitly requested. It will optionally persist an agent name to the standard config file so that later `post_message.py` calls do not require `--agent`.
+
+Update `AGENTS.md` and `README.md` to show the new single-command workflow, including the default behavior and how to select inline mode.
 
 ## Concrete Steps
 
-From the repository root, install dependencies, start the server, and open the UI. The following commands are the working, repeatable sequence:
+From the repository root (`C:\rkka_Projects\multi-agent-chat`):
 
-    python -m venv .venv
-    .\.venv\Scripts\Activate.ps1
-    pip install -r requirements.txt
-    python -m uvicorn app.main:app --reload
+1) Add `scripts/agent_dev.py` with command-line flags for `--agent`, `--server`, `--room`, `--watch-mode`, `--server-mode`, and `--check`.
+2) Document the helper in `AGENTS.md` and `README.md`.
+3) Validate by running:
 
-Open `http://127.0.0.1:8000/` in a browser. To post a message via HTTP, run:
+    python scripts/agent_dev.py --check
 
-    curl -X POST http://127.0.0.1:8000/api/messages -H "Content-Type: application/json" -d "{\"agent\":\"codex\",\"kind\":\"status\",\"content\":\"hello\",\"room\":\"default\"}"
+Then run:
 
-To run the automated test:
+    python scripts/agent_dev.py --agent DemoAgent
 
-    pytest
+You should see a new console window running the watch stream while the original terminal remains free.
 
 ## Validation and Acceptance
 
-Acceptance is achieved when starting the server and opening the browser UI shows a live feed that updates as new messages are posted. A POST to `/api/messages` should return JSON with an `id` and `ts`, and the message should appear in the UI without refreshing. `pytest` should report one passing test (`tests/test_api.py`).
+Acceptance is achieved when:
+
+1) `python scripts/agent_dev.py --check` reports server health without launching a watch stream.
+2) `python scripts/agent_dev.py --agent DemoAgent` opens a separate watch console (Windows) and keeps the original terminal available for other commands.
+3) If the server is not running, the helper starts it automatically and the watch stream connects successfully within a few seconds.
 
 ## Idempotence and Recovery
 
-Initialization creates tables only if they do not exist and reuses the same SQLite database on repeated runs. To reset the data, delete `data/agent_chat.sqlite3`; the server will recreate it on the next startup. The steps in this plan can be rerun without causing drift, aside from overwriting existing data if the database file is removed.
+The helper is safe to run multiple times. If the server is already running, it does not start a second instance. The watch stream can be closed independently without affecting the server. If anything becomes inconsistent, stop the server process and rerun the helper; it will relaunch as needed.
 
 ## Artifacts and Notes
 
-Example validation output:
+Example expected output for a health check:
 
-    ============================= test session starts =============================
-    collected 1 item
-
-    tests\test_api.py .                                                      [100%]
-
-    ============================== 1 passed in 0.38s ===============================
+    server: http://127.0.0.1:8000 (ok)
 
 ## Interfaces and Dependencies
 
-Use Python 3 with FastAPI and Uvicorn. Store messages in SQLite using the standard library `sqlite3` module. Provide the following modules and functions:
+The helper must use only the Python standard library and reuse existing scripts for watch behavior. The new public entry point is:
 
-- `app.main` defines `create_app(db_path: pathlib.Path | None = None) -> fastapi.FastAPI` and a module-level `app = create_app()` for Uvicorn to import.
-- `app.db` defines `init_db(db_path: pathlib.Path)`, `insert_message(db_path: pathlib.Path, message: dict) -> dict`, and `fetch_messages(db_path: pathlib.Path, room: str, limit: int, after_id: int | None) -> list[dict]`.
-- `app.realtime` defines a `ConnectionManager` with `connect`, `disconnect`, and `broadcast` coroutine methods for WebSocket clients.
-- `app.schema` defines Pydantic models `MessageIn` and `MessageOut`.
-- `pytest.ini` sets `pythonpath = .` so tests can import the `app` package.
+- `scripts/agent_dev.py` with a `main()` that can be invoked via `python scripts/agent_dev.py`.
 
-Plan update note (2026-02-04T04:25:03+09:00): Added `AGENTS.md` and updated progress, decision log, and outcomes to reflect the new usage guide.
+Plan update note (2026-02-03): Replaced the prior completed plan with a new ExecPlan focused on the one-command agent bootstrap and watch helper.
+Plan update note (2026-02-03): Marked implementation, docs, and validation steps complete and recorded additional decisions after the health-check validation.
