@@ -1,0 +1,63 @@
+﻿<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Multi-Agent Chat Hub</title>
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <div class="page">
+      <header class="topbar">
+        <div>
+          <div class="eyebrow">Multi-Agent Coordination</div>
+          <h1>Work Chat Hub</h1>
+        </div>
+        <div class="status" id="ws-status">Connecting…</div>
+      </header>
+
+      <main class="grid">
+        <section class="panel composer">
+          <h2>Post Update</h2>
+          <div class="field">
+            <label for="room">Room</label>
+            <input id="room" type="text" placeholder="default" />
+          </div>
+          <div class="field">
+            <label for="agent">Agent</label>
+            <input id="agent" type="text" placeholder="codex" />
+          </div>
+          <div class="field">
+            <label for="kind">Kind</label>
+            <select id="kind">
+              <option value="status">status</option>
+              <option value="plan">plan</option>
+              <option value="blocker">blocker</option>
+              <option value="done">done</option>
+              <option value="note">note</option>
+            </select>
+          </div>
+          <div class="field">
+            <label for="content">Message</label>
+            <textarea id="content" rows="5" placeholder="What are you working on?"></textarea>
+          </div>
+          <button id="send">Send Update</button>
+          <p class="hint">Updates are stored locally in SQLite and broadcast to all listeners.</p>
+        </section>
+
+        <section class="panel stream">
+          <div class="stream-head">
+            <div>
+              <h2>Live Stream</h2>
+              <div class="sub">Room: <span id="room-label">default</span></div>
+            </div>
+            <button id="reconnect" class="ghost">Reconnect</button>
+          </div>
+          <div class="messages" id="messages"></div>
+        </section>
+      </main>
+    </div>
+
+    <script src="/static/app.js"></script>
+  </body>
+</html>
